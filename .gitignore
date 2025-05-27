@@ -1,13 +1,19 @@
 # .gitignore for Linh PRS project
 
 # Ignore the data input directory and all its contents
+# but keep the directory by not ignoring .gitkeep
 /data/input/*
+!/data/input/.gitkeep
 
 # Ignore the converted binary data directory and all its contents
+# but keep the directory by not ignoring .gitkeep
 /data/converted_binary/*
+!/data/converted_binary/.gitkeep
 
 # Ignore the results directory and all its contents
+# but keep the directory by not ignoring .gitkeep
 /results/*
+!/results/.gitkeep
 
 # Specific PLINK log files if they are generated in the root or other non-ignored locations
 *.log
