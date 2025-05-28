@@ -10,22 +10,21 @@ CONVERTED_BINARY_DIR="${BASE_DIR}/data/converted_binary"
 RESULTS_DIR="${BASE_DIR}/results"
 
 # --- Configuration: File Names ---
-#MAP_FILE_NAME="Forward_UNLV_GlobalDiversityArray_PRS_20231213.map"
-#PED_FILE_NAME="Forward_UNLV_GlobalDiversityArray_PRS_20231213.ped"
 MAP_FILE_NAME="Top_UNLV_GlobalDiversityArray_PRS_20231213.map"
 PED_FILE_NAME="Top_UNLV_GlobalDiversityArray_PRS_20231213.ped"
-BETA_CSV_FILE_NAME="betas.csv" # I believe this can be replaced with a GWAS data at a later time.
+# NOTE: This file is expected to be a TAB-SEPARATED (TSV) file.
+BETA_SUMMARY_STATS_FILE_NAME="betas.tsv" # Or your new TSV filename
 
 # Output file name prefixes (without directory paths)
 PLINK_BINARY_NAME_PREFIX="unlv_gda_binary"
-SCORE_FILE_NAME="my_scores.txt"
+SCORE_FILE_NAME="my_scores.txt" # This will be created from the summary statistics
 FREQ_FILE_NAME_PREFIX="${PLINK_BINARY_NAME_PREFIX}_freqs"
 PRS_RESULTS_NAME_PREFIX="unlv_prs_results"
 
 # --- Construct full paths for files ---
 MAP_FILE="${INPUT_DATA_DIR}/${MAP_FILE_NAME}"
 PED_FILE="${INPUT_DATA_DIR}/${PED_FILE_NAME}"
-BETA_CSV_FILE="${INPUT_DATA_DIR}/${BETA_CSV_FILE_NAME}"
+BETA_SUMMARY_STATS_FILE="${INPUT_DATA_DIR}/${BETA_SUMMARY_STATS_FILE_NAME}"
 
 # PLINK2 binary files will be prefixed with the directory path
 PLINK_BINARY_OUT_PREFIX="${CONVERTED_BINARY_DIR}/${PLINK_BINARY_NAME_PREFIX}"
@@ -49,20 +48,43 @@ echo "  Converted binary data: ${CONVERTED_BINARY_DIR}"
 echo "  Results: ${RESULTS_DIR}"
 echo ""
 
-# --- Step 1: Prepare the scoring file from betas.csv ---
-echo "Step 1: Preparing scoring file (${SCORE_FILE_PATH}) from ${BETA_CSV_FILE}..."
-if [ ! -f "${BETA_CSV_FILE}" ]; then
-    echo "Error: Beta CSV file not found: ${BETA_CSV_FILE}"
+# --- Step 1: Prepare the scoring file from the GWAS summary statistics TSV ---
+echo "Step 1: Preparing scoring file (${SCORE_FILE_PATH}) from GWAS TSV: ${BETA_SUMMARY_STATS_FILE}..."
+if [ ! -f "${BETA_SUMMARY_STATS_FILE}" ]; then
+    echo "Error: GWAS summary statistics TSV file not found: ${BETA_SUMMARY_STATS_FILE}"
     exit 1
 fi
-# We need rsid (col 1), effect_allele (col 4), and Beta (col 6) from betas.csv
-# Assuming betas.csv has a header, we skip the first line (header) using tail -n +2
-# awk extracts and prints the required columns, stripping leading/trailing whitespace.
-tail -n +2 "${BETA_CSV_FILE}" | awk -F',' '{gsub(/^[ \t]+|[ \t]+$/, "", $1); gsub(/^[ \t]+|[ \t]+$/, "", $4); gsub(/^[ \t]+|[ \t]+$/, "", $6); print $1 "\t" $4 "\t" $6}' > "${SCORE_FILE_PATH}"
+
+# From the new TSV format, we need:
+# 1. Variant ID (rsID): From 2nd column 'SNP'
+# 2. Effect Allele: From 4th column 'effect_allele'
+# 3. Beta: From 8th column 'beta'
+# The input TSV is assumed to have a header, so we skip it with 'tail -n +2'.
+tail -n +2 "${BETA_SUMMARY_STATS_FILE}" | awk -F'\t' '
+{
+    rsid = $2;          # SNP column
+    effect_allele = $4; # effect_allele column
+    beta = $8;          # beta column
+
+    # Clean leading/trailing whitespace from extracted values
+    gsub(/^[ \t]+|[ \t]+$/, "", rsid);
+    gsub(/^[ \t]+|[ \t]+$/, "", effect_allele);
+    gsub(/^[ \t]+|[ \t]+$/, "", beta);
+
+    # Ensure rsid, effect_allele are not empty and beta is a numeric value before printing
+    # This also helps filter out lines where parsing might have failed or beta is non-numeric
+    if (rsid != "" && effect_allele != "" && beta ~ /^[+-]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$/) {
+        print rsid "\t" effect_allele "\t" beta;
+    } else if (NR > 1) { # Avoid warning for header if tail failed for some reason
+        # Optional: print a warning to stderr for lines that couldnt be fully parsed or had non-numeric beta
+        # print "Warning (awk): Skipping line " NR " due to parsing issues or non-numeric beta: rsid='"'"'" rsid "'"'"', allele='"'"'" effect_allele "'"'"', beta='"'"'" beta "'"'"'" > "/dev/stderr";
+    }
+}' > "${SCORE_FILE_PATH}"
+
 
 if [ ! -s "${SCORE_FILE_PATH}" ]; then
-    echo "Error: Failed to create or scoring file is empty: ${SCORE_FILE_PATH}"
-    echo "Please check ${BETA_CSV_FILE} and the awk command."
+    echo "Error: Failed to create scoring file or scoring file is empty: ${SCORE_FILE_PATH}"
+    echo "Please check ${BETA_SUMMARY_STATS_FILE}, its format, and the awk command."
     exit 1
 fi
 echo "Scoring file ${SCORE_FILE_PATH} created successfully."
@@ -113,7 +135,7 @@ echo "Step 3: Calculating Polygenic Risk Scores (output prefix: ${PRS_RESULTS_OU
 plink2 \
     --pfile "${PLINK_BINARY_OUT_PREFIX}" \
     --read-freq "${FREQ_FILE_AFREQ_PATH}" \
-    --score "${SCORE_FILE_PATH}" 1 2 3 cols=+scoresums \
+    --score "${SCORE_FILE_PATH}" 1 2 3 cols=+scoresums list-variants \
     --out "${PRS_RESULTS_OUT_PREFIX}"
 
 if [ ! -f "${PRS_SSCORE_FILE_PATH}" ]; then
@@ -125,13 +147,14 @@ fi
 echo ""
 echo "--- PRS Calculation Complete ---"
 echo "Input genotype files: ${MAP_FILE}, ${PED_FILE}"
-echo "Input beta summary statistics: ${BETA_CSV_FILE}"
+echo "Input GWAS summary statistics: ${BETA_SUMMARY_STATS_FILE}"
 echo ""
 echo "Intermediate scoring file: ${SCORE_FILE_PATH}"
 echo "PLINK2 binary files generated: ${PLINK_BINARY_OUT_PREFIX}.pgen, .pvar, .psam"
 echo "Allele frequency file generated: ${FREQ_FILE_AFREQ_PATH}"
 echo ""
 echo "PRS results are in: ${PRS_SSCORE_FILE_PATH}"
+echo "Variants used for scoring listed in: ${PRS_RESULTS_OUT_PREFIX}.sscore.vars"
 echo "Log file for conversion step: ${PLINK_BINARY_OUT_PREFIX}.log"
 echo "Log file for frequency calculation: ${FREQ_FILE_OUT_PREFIX}.log"
 echo "Log file for the scoring step: ${PRS_RESULTS_OUT_PREFIX}.log"
