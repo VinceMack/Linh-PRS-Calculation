@@ -4,7 +4,7 @@
 
 # --- Configuration: Directory Paths ---
 # Assuming the script is run from the 'Linh PRS' directory
-BASE_DIR="." # Current directory
+BASE_DIR="."
 INPUT_DATA_DIR="${BASE_DIR}/data/input"
 CONVERTED_BINARY_DIR="${BASE_DIR}/data/converted_binary"
 RESULTS_DIR="${BASE_DIR}/results"
