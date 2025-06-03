@@ -1,7 +1,6 @@
 #!/bin/bash
 
 # Script to calculate Polygenic Risk Scores using PLINK2
-
 # --- Configuration: Directory Paths ---
 # Assuming the script is run from the 'Linh PRS' directory
 BASE_DIR="."
