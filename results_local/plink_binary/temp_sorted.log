@@ -1,0 +1,36 @@
+PLINK v2.00a6 AVX2 (23 Nov 2023)
+Options in effect:
+  --make-pgen
+  --map ./test_data/GlobalDiversityArray_PRS_PLINK_Forward_Strand_Format.map
+  --out ./results_local/plink_binary/temp_sorted
+  --ped ./test_data/GlobalDiversityArray_PRS_PLINK_Forward_Strand_Format.ped
+  --sort-vars
+
+Hostname: DE-BM37N23
+Working directory: /home/username/Desktop/PRScs
+Start time: Tue Jul 22 13:15:02 2025
+
+Random number seed: 1753215302
+3810 MiB RAM detected, ~2439 available; reserving 1905 MiB for main workspace.
+Using up to 8 compute threads.
+--pedmap: 2028571 variants in .map file.
+--pedmap: 48 samples present, genotypes extracted to
+./results_local/plink_binary/temp_sorted-temporary.bed.smaj .
+Transposing sample-major .bed to
+./results_local/plink_binary/temp_sorted-temporary.pgen , and setting major
+alleles to provisional-REF.
+Transpose complete.
+--pedmap: ./results_local/plink_binary/temp_sorted-temporary.pgen +
+./results_local/plink_binary/temp_sorted-temporary.pvar +
+./results_local/plink_binary/temp_sorted-temporary.psam written. .bed.smaj and
+.fam.tmp temporary files deleted.
+48 samples (0 females, 0 males, 48 ambiguous; 48 founders) loaded from
+./results_local/plink_binary/temp_sorted-temporary.psam.
+2028571 variants loaded from
+./results_local/plink_binary/temp_sorted-temporary.pvar.
+Note: No phenotype data present.
+Writing ./results_local/plink_binary/temp_sorted.pvar ... done.
+Writing ./results_local/plink_binary/temp_sorted.psam ... done.
+Writing ./results_local/plink_binary/temp_sorted.pgen ... done.
+
+End time: Tue Jul 22 13:15:21 2025

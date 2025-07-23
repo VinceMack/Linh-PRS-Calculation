@@ -1,0 +1,27 @@
+PLINK v2.00a6 AVX2 (23 Nov 2023)
+Options in effect:
+  --bfile ./results_local/plink_binary/gda_binary
+  --out ./results_local/gda_prs_final
+  --read-freq ./results_local/plink_binary/gda_freqs.afreq
+  --score ./results_local/gda_score_file.txt 2 4 6 header cols=+scoresums
+
+Hostname: DE-BM37N23
+Working directory: /home/username/Desktop/PRScs
+Start time: Tue Jul 22 14:55:52 2025
+
+Random number seed: 1753221352
+3810 MiB RAM detected, ~2617 available; reserving 1905 MiB for main workspace.
+Using up to 8 compute threads.
+48 samples (0 females, 0 males, 48 ambiguous; 48 founders) loaded from
+./results_local/plink_binary/gda_binary.fam.
+1952878 variants loaded from ./results_local/plink_binary/gda_binary.bim.
+Note: No phenotype data present.
+--read-freq: PLINK 2 --freq file detected.
+--read-freq: Frequencies for 1944011 variants loaded.
+Warning: 8867 entries skipped due to missing variant IDs, mismatching allele
+codes, and/or zero observations.
+Calculating allele frequencies... done.
+--score: 238951 variants processed.
+--score: Results written to ./results_local/gda_prs_final.sscore .
+
+End time: Tue Jul 22 14:55:54 2025
