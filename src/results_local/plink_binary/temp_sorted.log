@@ -1,0 +1,20 @@
+PLINK v2.00a6 AVX2 (23 Nov 2023)
+Options in effect:
+  --make-pgen
+  --map ./test_data/GlobalDiversityArray_PRS_PLINK_Forward_Strand_Format.map
+  --out ./results_local/plink_binary/temp_sorted
+  --ped ./test_data/GlobalDiversityArray_PRS_PLINK_Forward_Strand_Format.ped
+  --sort-vars
+
+Hostname: DE-BM37N23
+Working directory: /home/username/Desktop/PRScs/src
+Start time: Tue Jul 22 13:12:59 2025
+
+Random number seed: 1753215179
+3810 MiB RAM detected, ~2317 available; reserving 1905 MiB for main workspace.
+Using up to 8 compute threads.
+Error: Failed to open
+./test_data/GlobalDiversityArray_PRS_PLINK_Forward_Strand_Format.map : No such
+file or directory.
+
+End time: Tue Jul 22 13:12:59 2025
