@@ -2,12 +2,17 @@
 set -e
 
 # This script's only job is to format the raw GWAS file for PRS-CS.
-# It is designed to be run from the project's root directory.
+# It automatically determines the project's root directory.
+
+# --- Dynamic Path Configuration ---
+# Get the directory where this script is located.
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# The project root is one level up from the 'src' directory.
+ROOT_DIR=$(dirname "$SCRIPT_DIR")
 
 # --- Configuration ---
-# All paths are relative to the project root directory.
-RAW_GWAS_FILE="./data/input/gwas.txt"
-FORMATTED_GWAS_FILE="./data/input/formatted_gwas.txt"
+RAW_GWAS_FILE="${ROOT_DIR}/data/input/gwas.txt"
+FORMATTED_GWAS_FILE="${ROOT_DIR}/data/input/formatted_gwas.txt"
 
 echo "--- Starting GWAS Formatting ---"
 
@@ -18,15 +23,8 @@ if [ ! -f "$RAW_GWAS_FILE" ]; then
 fi
 
 # 2. Format the file, treating any spaces or tabs as delimiters.
-# NOTE: These column numbers are for the Chronic Periodontitis GWAS (GCST90044102).
-# If you use a different GWAS, you must update these numbers.
 awk -F'[ \t]+' 'BEGIN{OFS="\t"; print "SNP", "A1", "A2", "BETA", "P"} \
      NR > 1 { \
-        # $2: variant_id (SNP)
-        # $4: effect_allele (A1)
-        # $5: other_allele (A2)
-        # $11: beta (BETA)
-        # $13: p_value (P)
         print $2, $4, $5, $11, $13 \
      }' "${RAW_GWAS_FILE}" > "${FORMATTED_GWAS_FILE}"
 

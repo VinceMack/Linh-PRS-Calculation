@@ -2,25 +2,25 @@
 set -e
 
 # This script runs the full PRS-CS pipeline.
-# It assumes the GWAS file has already been formatted by 'reformat_gwas.sh'.
-# It is designed to be run from the project's root directory.
+# It automatically determines the project's root directory and the LD reference path.
 
 # ==============================================================================
 # --- Main Configuration ---
 # ==============================================================================
-# This is the sample size (N) of the GWAS study you are using.
-# You MUST update this value if you change the GWAS summary statistics file.
-# The value for the Chronic Periodontitis study (GCST90044102) is 456,285.
 GWAS_SAMPLE_SIZE=456285
 # ==============================================================================
 
+# --- Dynamic Path Configuration ---
+# Get the directory where this script is located.
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+# The project root is one level up from the 'src' directory.
+ROOT_DIR=$(dirname "$SCRIPT_DIR")
+
 # --- Path Configuration ---
-# All paths are relative to the project root directory.
-BASE_DIR="."
-RESULTS_DIR="${BASE_DIR}/results"
-INPUT_DATA_DIR="${BASE_DIR}/data/input"
-LD_REF_DIR="${BASE_DIR}/data/linkage_disequilibrium_ref"
-CONVERTED_BINARY_DIR="${BASE_DIR}/data/converted_binary"
+RESULTS_DIR="${ROOT_DIR}/results"
+INPUT_DATA_DIR="${ROOT_DIR}/data/input"
+LD_PARENT_DIR="${ROOT_DIR}/data/linkage_disequilibrium_ref" # Parent directory for LD panels
+CONVERTED_BINARY_DIR="${ROOT_DIR}/data/converted_binary"
 
 # Input files
 FORMATTED_GWAS_FILE="${INPUT_DATA_DIR}/formatted_gwas.txt"
@@ -36,8 +36,29 @@ FINAL_PRS_PREFIX="${RESULTS_DIR}/gda_prs_final"
 
 echo "--- Starting Final PRS-CS Workflow ---"
 
-# 1. Prerequisite Check: Ensure the formatted GWAS file exists.
-echo "--- Step 1: Checking for formatted GWAS file ---"
+# --- Dynamic LD Reference Path Detection ---
+echo "--- Step 1: Detecting LD Reference directory ---"
+# Count the number of subdirectories inside the LD parent directory.
+NUM_LD_DIRS=$(find "${LD_PARENT_DIR}" -mindepth 1 -maxdepth 1 -type d | wc -l)
+
+if [ "$NUM_LD_DIRS" -eq 0 ]; then
+    echo "Error: No LD Reference directory found inside ${LD_PARENT_DIR}"
+    echo "Please place your LD reference panel (e.g., 'ldblk_1kg_eur') inside that folder."
+    exit 1
+elif [ "$NUM_LD_DIRS" -gt 1 ]; then
+    echo "Error: Multiple directories found inside ${LD_PARENT_DIR}"
+    echo "Please ensure there is only ONE subdirectory containing the LD reference panel."
+    exit 1
+else
+    # If exactly one directory is found, get its full path.
+    LD_REF_DIR_RAW=$(ls -d ${LD_PARENT_DIR}/*/)
+    LD_REF_DIR=${LD_REF_DIR_RAW%/} # Remove trailing slash
+    echo "Found LD Reference: ${LD_REF_DIR}"
+fi
+echo ""
+
+# --- Prerequisite Check ---
+echo "--- Step 2: Checking for formatted GWAS file ---"
 if [ ! -s "$FORMATTED_GWAS_FILE" ]; then
     echo "Error: Formatted GWAS file not found or is empty: ${FORMATTED_GWAS_FILE}"
     echo "Please run './src/reformat_gwas.sh' first to create it."
@@ -46,9 +67,8 @@ fi
 echo "Formatted GWAS file found."
 echo ""
 
-# 2. Convert, Sort, and Filter Target Genotype Data
-echo "--- Step 2: Preparing PLINK binary files ---"
-# Create directories if they don't exist
+# --- Prepare PLINK binary files ---
+echo "--- Step 3: Preparing PLINK binary files ---"
 mkdir -p "${CONVERTED_BINARY_DIR}" "${RESULTS_DIR}"
 TEMP_PLINK_PREFIX="${CONVERTED_BINARY_DIR}/temp_sorted"
 plink2 --map "${MAP_FILE}" --ped "${PED_FILE}" --make-pgen --sort-vars --out "${TEMP_PLINK_PREFIX}"
@@ -56,16 +76,15 @@ plink2 --pfile "${TEMP_PLINK_PREFIX}" --chr 1-22 --make-bed --out "${PLINK_BINAR
 echo "PLINK files created in ${CONVERTED_BINARY_DIR}"
 echo ""
 
-# 3. Calculate Allele Frequencies
-echo "--- Step 3: Calculating allele frequencies ---"
+# --- Calculate Allele Frequencies ---
+echo "--- Step 4: Calculating allele frequencies ---"
 plink2 --bfile "${PLINK_BINARY_PREFIX}" --freq --out "${CONVERTED_BINARY_DIR}/gda_freqs"
 echo "Allele frequencies calculated."
 echo ""
 
-# 4. Run PRS-cs
-echo "--- Step 4: Running PRScs.py ---"
-# The --n_gwas parameter now uses the variable defined at the top of the script.
-python3 "${BASE_DIR}/PRScs.py" \
+# --- Run PRS-cs ---
+echo "--- Step 5: Running PRScs.py ---"
+python3 "${ROOT_DIR}/PRScs.py" \
     --ref_dir="${LD_REF_DIR}" \
     --bim_prefix="${PLINK_BINARY_PREFIX}" \
     --sst_file="${FORMATTED_GWAS_FILE}" \
@@ -74,8 +93,8 @@ python3 "${BASE_DIR}/PRScs.py" \
 echo "PRS-CS completed."
 echo ""
 
-# 5. Combine PRS-CS Output
-echo "--- Step 5: Combining PRS-CS results ---"
+# --- Combine PRS-CS Output ---
+echo "--- Step 6: Combining PRS-CS results ---"
 HEADER_WRITTEN=false
 for i in {1..22}; do
     CHUNK_FILE="${PRSCS_OUT_PREFIX}_pst_eff_a1_b0.5_phiauto_chr${i}.txt"
@@ -87,8 +106,8 @@ done
 echo "Scoring file created."
 echo ""
 
-# 6. Calculate Final PRS
-echo "--- Step 6: Calculating final scores with PLINK2 ---"
+# --- Calculate Final PRS ---
+echo "--- Step 7: Calculating final scores with PLINK2 ---"
 plink2 \
     --bfile "${PLINK_BINARY_PREFIX}" \
     --read-freq "${FREQ_FILE_PATH}" \
