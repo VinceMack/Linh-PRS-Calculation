@@ -19,8 +19,10 @@ ROOT_DIR=$(dirname "$SCRIPT_DIR")
 # --- Path Configuration ---
 RESULTS_DIR="${ROOT_DIR}/results"
 INPUT_DATA_DIR="${ROOT_DIR}/data/input"
-LD_PARENT_DIR="${ROOT_DIR}/data/linkage_disequilibrium_ref" # Parent directory for LD panels
+LD_PARENT_DIR="${ROOT_DIR}/data/linkage_disequilibrium_ref"
 CONVERTED_BINARY_DIR="${ROOT_DIR}/data/converted_binary"
+# Path to the directory containing the PRScs.py script
+PRSCS_PROGRAM_DIR="${ROOT_DIR}/PRScs"
 
 # Input files
 FORMATTED_GWAS_FILE="${INPUT_DATA_DIR}/formatted_gwas.txt"
@@ -84,7 +86,8 @@ echo ""
 
 # --- Run PRS-cs ---
 echo "--- Step 5: Running PRScs.py ---"
-python3 "${ROOT_DIR}/PRScs.py" \
+# CORRECTED PATH: This now points to the PRScs.py script inside the 'PRScs' subdirectory.
+python3 "${PRSCS_PROGRAM_DIR}/PRScs.py" \
     --ref_dir="${LD_REF_DIR}" \
     --bim_prefix="${PLINK_BINARY_PREFIX}" \
     --sst_file="${FORMATTED_GWAS_FILE}" \
