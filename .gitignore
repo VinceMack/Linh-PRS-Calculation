@@ -1,1 +1,55 @@
 
+
+# =================================================================
+# .gitignore for a Reproducible PRS Pipeline
+#
+# This file ignores all large data files and results, but uses
+# the .gitkeep convention to preserve the necessary directory structure.
+# =================================================================
+
+# --- Generated Results ---
+# Ignore the entire contents of the results directory.
+/results/*
+# But, DO NOT ignore the .gitkeep file, which preserves the empty folder.
+!/results/.gitkeep
+
+
+# --- User-Provided Input Data ---
+# Ignore the contents of the main input data directory.
+/data/input/*
+# But, keep the directory structure.
+!/data/input/.gitkeep
+
+
+# --- Intermediate Binary Data ---
+# Ignore the contents of the converted binary directory.
+/data/converted_binary/*
+# But, keep the directory structure.
+!/data/converted_binary/.gitkeep
+
+
+# --- Large Reference Data ---
+# Ignore the contents of the LD reference panel directory.
+/data/linkage_disequilibrium_ref/*
+# But, keep the directory structure.
+!/data/linkage_disequilibrium_ref/.gitkeep
+
+
+# --- Python and System Files ---
+# Ignore Python bytecode and cache directories.
+__pycache__/
+*.pyc
+
+# Ignore macOS system files.
+.DS_Store
+
+
+# --- Log Files ---
+# Ignore all log files, which are generated during runs.
+*.log
+
+
+# --- Miscellaneous ---
+# Ignore other generated or temporary files.
+scraped_output.txt
+
